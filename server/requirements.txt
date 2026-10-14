@@ -1,0 +1,5 @@
+flask>=3.0
+stripe>=10.0
+gspread>=6.0
+python-dotenv>=1.0
+waitress>=3.0
