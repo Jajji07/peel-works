@@ -6,7 +6,7 @@
 const CONFIG = {
   // Public address of YOUR server (server/server.py), no trailing slash.
   // Example: 'https://api.yourdomain.com'. Leave empty until the server runs.
-  apiBase: '',
+   apiBase: 'https://api.peel-work.com',
   // Stripe PUBLISHABLE key (starts with pk_test_ or pk_live_). Safe to put here;
   // never put the SECRET key (sk_...) in the website.
   stripePublishableKey: 'pk_live_51UR3ZIRaZOLZV8wLxvI19KKvxgcYQhf50dUmkgqBtsDpiQLy1p2btHfqjsnVXKktD3HnrnRoP9oR5pYEPz2OzdIb00lOEt2ytN',
