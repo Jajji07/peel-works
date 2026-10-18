@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout — Peelworks</title>
+<meta name="robots" content="noindex">
+<!-- Stripe.js must always load straight from Stripe (never copy it into this site). -->
+<script src="https://js.stripe.com/dahlia/stripe.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%27 stop-color=%27%23ff5b2e%27/%3E%3Cstop offset=%27.5%27 stop-color=%27%23ff3d8b%27/%3E%3Cstop offset=%271%27 stop-color=%27%237c5cff%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2732%27 height=%2732%27 rx=%2710%27 fill=%27url(%23g)%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="checkout">
+
+<main class="co-page">
+  <div class="wrap">
+    <a href="designs.html" class="co-back">&larr; Keep shopping</a>
+
+    <!-- Paying -->
+    <div class="co-grid" id="coPay" hidden>
+      <section class="co-summary">
+        <span class="eyebrow">Your order</span>
+        <h1>Checkout</h1>
+        <div class="co-lines" id="coLines"></div>
+        <div class="co-totals">
+          <div><span>Subtotal</span><b id="coSub"></b></div>
+          <div><span>Shipping</span><b>Free</b></div>
+        </div>
+        <p class="co-note">Taxes and the final total are confirmed in the payment form.</p>
+        <p class="co-note">By paying you agree to our <a href="terms.html">Terms</a> and <a href="refund-policy.html">Refund policy</a>.</p>
+      </section>
+      <section class="co-pay">
+        <div class="co-loading" id="coLoading"><span class="spin dark"></span>Loading secure payment form…</div>
+        <div id="checkout-form"></div>
+        <p class="co-error" id="coError" role="alert" hidden></p>
+        <p class="secure-note"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Payments are processed securely by Stripe. Card details never touch our site.</p>
+      </section>
+    </div>
+
+    <!-- Other states -->
+    <section class="co-state" id="coState" hidden>
+      <div class="co-icon" id="coIcon"></div>
+      <h1 id="coTitle"></h1>
+      <p id="coText"></p>
+      <div class="hero-ctas" id="coActions"></div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/catalog.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/checkout.js"></script>
+</body>
+</html>

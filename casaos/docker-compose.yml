@@ -1,0 +1,32 @@
+# Peelworks for CasaOS
+# Runs the checkout server + a Cloudflare Tunnel that connects it to api.yourdomain.com.
+#
+# Before importing:
+#   1. Upload the "server" folder to /DATA/AppData/peelworks/server on CasaOS
+#      (it must contain server.py, designs.json, requirements.txt and your .env).
+#   2. Paste your Cloudflare tunnel token below (Zero Trust -> Networks -> Tunnels).
+name: peelworks
+
+services:
+  peelworks-server:
+    image: python:3.12-slim
+    container_name: peelworks-server
+    working_dir: /app
+    volumes:
+      # Your code, .env, orders.csv and customer photos all live in this folder on CasaOS.
+      - /DATA/AppData/peelworks/server:/app
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["pip install --no-cache-dir --root-user-action=ignore -r requirements.txt && waitress-serve --listen=0.0.0.0:4242 server:app"]
+    ports:
+      - "4242:4242"          # lets you check http://CASAOS-IP:4242/api/health from home
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: peelworks-tunnel
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      - TUNNEL_TOKEN=PASTE_YOUR_TUNNEL_TOKEN_HERE
+    depends_on:
+      - peelworks-server
+    restart: unless-stopped

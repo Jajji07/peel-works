@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peelworks — Phone Skins & Stickers</title>
+<meta name="description" content="Hand-printed, laminated phone skins and vinyl stickers, made in Washington.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%27 stop-color=%27%23ff5b2e%27/%3E%3Cstop offset=%27.5%27 stop-color=%27%23ff3d8b%27/%3E%3Cstop offset=%271%27 stop-color=%27%237c5cff%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2732%27 height=%2732%27 rx=%2710%27 fill=%27url(%23g)%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="home">
+
+<header class="hero" id="top">
+  <div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+  <div class="wrap hero-inner">
+    <span class="eyebrow fade-up">Hand-printed in Washington</span>
+    <h1 class="hero-title"><span class="line"><span>Your phone.</span></span><span class="line"><span class="grad-text">Your skin.</span></span></h1>
+    <p class="hero-sub fade-up">Laminated vinyl skins and stickers with designs you won't find anywhere else. Peel, stick, done.</p>
+    <div class="hero-ctas fade-up">
+      <a href="designs.html" class="btn btn-dark magnetic">Browse designs</a>
+      <a href="studio.html" class="btn btn-light magnetic">Make your own</a>
+    </div>
+    <p class="hero-hint fade-up">psst — the stickers are draggable</p>
+  </div>
+  <div class="scroll-cue"><span>Scroll</span><div class="mouse"><div class="wheel"></div></div></div>
+</header>
+
+<section class="story dark" id="story">
+  <div class="story-sticky">
+    <div class="bigword" id="bigword">PEEL</div>
+    <div class="wrap story-inner">
+      <div class="captions">
+        <div class="cap" data-s="0" data-e=".2"><span class="tag">Peelworks</span><h2>Meet your phone's<br>new outfit.</h2><p>Keep scrolling and watch a skin come to life.</p></div>
+        <div class="cap" data-s=".24" data-e=".47"><h2>Printed edge<br>to edge.</h2><p>Bold, saturated designs on waterproof vinyl, every color carried all the way to the corners.</p></div>
+        <div class="cap" data-s=".5" data-e=".77"><h2>Three layers.<br>One clean finish.</h2><p>Sticky vinyl, your design, and a clear laminate on top that helps protect against scratches and water.</p></div>
+        <div class="cap" data-s=".8" data-e="1.3"><h2>Wraps the camera.<br>Cuts every lens.</h2><p>The skin covers the whole back, camera island included, with a precise hole for each lens and the flash.</p></div>
+      </div>
+      <div class="stage">
+        <div class="phone" id="storyPhone">
+          <div class="face front">
+            <div class="screen"><div class="island"></div><div class="s-date" id="sDate">Today</div><div class="s-time">9:41</div></div>
+          </div>
+          <div class="face glass back">
+            <div class="layer vinyl" id="lVinyl"><div class="fill"></div></div>
+            <div class="layer print" id="lPrint"><div class="fill" id="storyPrint"></div></div>
+            <div class="layer lam" id="lLam"><div class="fill"></div></div>
+            <div class="cam"><div class="cam-skin" id="storyCam"></div><i></i><i></i><i></i><b></b></div>
+            <div class="peel-edge" id="peelEdge"></div>
+          </div>
+        </div>
+        <div class="labels" id="labels">
+          <span style="--c:#e5e7eb">Clear laminate</span>
+          <span style="--c:#ff3d8b">Your design</span>
+          <span style="--c:#a1a1aa">Vinyl + adhesive</span>
+        </div>
+      </div>
+    </div>
+    <div class="story-progress"><div id="storyBar"></div></div>
+  </div>
+</section>
+
+<section class="home-trending">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><span class="eyebrow">Trending</span><h2>Fresh off the press.</h2></div>
+      <div class="rail-ctrl">
+        <button class="icon-btn rail-btn" data-dir="prev" aria-label="Scroll left">&larr;</button>
+        <button class="icon-btn rail-btn" data-dir="next" aria-label="Scroll right">&rarr;</button>
+        <a href="designs.html" class="btn btn-dark magnetic">See all <span id="designCount"></span> designs</a>
+      </div>
+    </div>
+  </div>
+  <div class="rail" id="rail"></div>
+</section>
+
+<section class="home-cats">
+  <div class="wrap">
+    <div class="section-head reveal"><div><span class="eyebrow">Shop by vibe</span><h2>Find your lane.</h2></div></div>
+    <div class="cats" id="cats"></div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true"><div class="marquee-skew"><div class="marquee-track">
+  <span>Hand-printed<i></i></span><span>Laminated<i></i></span><span>Wraps the camera<i></i></span><span>Shipped from Washington<i></i></span><span>Original designs<i></i></span>
+  <span>Hand-printed<i></i></span><span>Laminated<i></i></span><span>Wraps the camera<i></i></span><span>Shipped from Washington<i></i></span><span>Original designs<i></i></span>
+</div></div></div>
+
+<section class="promo">
+  <div class="wrap promo-inner reveal">
+    <div>
+      <span class="eyebrow">Studio</span>
+      <h2>Your photo.<br>Your phone.</h2>
+      <p>Upload any picture you took, drag it into place, and we'll print it as a full-back skin that wraps the camera too.</p>
+      <a href="studio.html" class="btn btn-dark magnetic">Open the Studio</a>
+    </div>
+    <div class="promo-art" aria-hidden="true">
+      <span class="mini-phone"><span class="mini-skin photo-ph"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M9 6l1.5-2h3L15 6"/></svg></span><span class="mini-cam"><span class="mini-cam-skin photo-ph"></span></span></span>
+    </div>
+  </div>
+</section>
+
+<div class="cta reveal">
+  <h2>Ready to peel?</h2>
+  <p>New designs drop regularly. Grab yours before they're gone.</p>
+  <a href="designs.html" class="btn magnetic">Shop the collection</a>
+</div>
+
+<script src="assets/catalog.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/home.js"></script>
+</body>
+</html>
