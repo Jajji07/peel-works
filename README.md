@@ -84,7 +84,7 @@ stripePublishableKey: 'pk_test_...',
 
 Payments use Stripe's embedded form on `checkout.html`. See **STRIPE_INTEGRATION_TODO.md** for every remaining Stripe step.
 
-Upload to GitHub: all the `.html` files (including `checkout.html`), the `assets/` and `tools/` folders, `README.md`, `.gitignore`, and from `server/` only `server.py`, `designs.json`, `requirements.txt`, `.env.example`. **Never** upload `.env`, `google-credentials.json`, `orders.csv` or the `uploads/` folder (customers' photos).
+Upload to GitHub: all the `.html` files (including `checkout.html` and `guide.html`), plus `CNAME`, `sitemap.xml`, `robots.txt`, the `assets/` and `tools/` folders, `README.md`, `.gitignore`, and from `server/` only `server.py`, `designs.json`, `requirements.txt`, `.env.example`. **Never** upload `.env`, `google-credentials.json`, `orders.csv` or the `uploads/` folder (customers' photos).
 
 ## 7. Test a purchase
 
@@ -113,6 +113,12 @@ When someone orders a custom photo skin, the **Custom photos** column in your sh
 - **zoom / position** is how the customer framed it on the website, so you can match it when you design the print file.
 - Uploads that never got paid for stay in the folder; delete old ones now and then.
 
+## Handy switches
+
+- **Pause orders:** in `assets/catalog.js` set `storeOpen: false`. The site stays up, but checkout shows a "taking a short break" message. Set it back to `true` to reopen.
+- **Photo cleanup:** the server deletes customer photos older than 90 days, once a day. To change that, add `PHOTO_KEEP_DAYS=60` (or any number) to `server/.env`.
+- **Share preview:** `assets/og.png` is the image shown when someone shares a link on iMessage, Instagram, Discord, etc.
+
 ## Changing prices, phone models or designs
 
 - **Prices** are charged by `server/server.py` (in cents at the top). The prices in `assets/catalog.js` are only for display, so change both.
@@ -139,3 +145,39 @@ WantedBy=multi-user.target
 ```
 
 Then `sudo systemctl enable --now peelworks`. (Run `cloudflared service install` for the tunnel too.)
+
+---
+
+## Customer accounts & order history
+
+Customers can sign up at **account.html**, sign in, and see every order with its status
+(Ordered → Printing → Shipped → Delivered) and tracking number. The account icon is in the top menu.
+
+How it works:
+- Accounts live in `server/peelworks.db` (SQLite) on your CasaOS box. Passwords are stored hashed; it's never put on GitHub.
+- Orders placed while signed in are linked to that account automatically.
+- Orders placed as a guest (or before accounts existed, from `orders.csv`) appear once the customer
+  **confirms their email** with a 6-digit code, as long as they used the same email.
+
+### Turn on email codes (confirm email + forgot password)
+1. Turn on 2-Step Verification for your Google account.
+2. Go to <https://myaccount.google.com/apppasswords>, create an app password named "Peelworks", copy the 16 letters.
+3. Add to `/DATA/AppData/peelworks/server/.env`:
+   ```
+   SMTP_USER=jatinkumarpyara@gmail.com
+   SMTP_PASSWORD=abcdabcdabcdabcd
+   SMTP_FROM=Peelworks <jatinkumarpyara@gmail.com>
+   ```
+4. Restart the `peelworks-server` container.
+
+Without these, sign up / sign in and new-order history still work; only email codes are off.
+
+### Update an order's status (customers see it instantly)
+```
+docker exec -it peelworks-server python orders_admin.py list
+docker exec -it peelworks-server python orders_admin.py status AB12CD34 making
+docker exec -it peelworks-server python orders_admin.py status AB12CD34 shipped 9400111899223817460912
+docker exec -it peelworks-server python orders_admin.py status AB12CD34 delivered
+```
+Statuses: `paid`, `making`, `shipped`, `delivered`, `refunded`, `canceled`.
+The order number is the last 8 characters customers see on their account page.

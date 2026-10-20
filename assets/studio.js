@@ -9,6 +9,8 @@ const photoInput = $('#photoInput');
 let current = D[qs.get('d')] || DESIGNS[0], pending = null, photo = null, stripCat = 'All';
 
 $('#model').innerHTML = PW.modelOptions();
+$('#studioModelHelp').innerHTML = PW.modelHelp();
+$('#studioTrust').innerHTML = PW.trust();
 $('#tryBundlePrice').textContent = money(CONFIG.bundlePrice);
 const paint = bg => { tryBase.style.background = bg; tryCamBase.style.background = bg; };
 
@@ -52,7 +54,7 @@ function setText(d) {
   stage.classList.toggle('panning', isCustom);
   $('#tryHint').textContent = isCustom ? 'Drag to move your photo' : 'Move or drag to tilt';
   $('#tryPrice').textContent = money(isCustom ? CONFIG.customPrice : CONFIG.skinPrice);
-  if (!isCustom) { const u = new URL(location.href); u.searchParams.set('d', d.id); history.replaceState(null, '', u); }
+  if (!isCustom) { const u = new URL(location.href); u.searchParams.set('d', d.id); history.replaceState(null, '', u); PW.pushRecent(d.id); }
 }
 function showDesign(d) {
   if (!d || d === current) return;

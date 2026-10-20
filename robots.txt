@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /checkout.html
+Disallow: /server/
+Disallow: /casaos/
+Disallow: /tools/
+
+Sitemap: https://peel-work.com/sitemap.xml

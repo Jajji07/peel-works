@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your account — Peelworks</title>
+<meta name="robots" content="noindex">
+<!-- Stripe.js must always load straight from Stripe (never copy it into this site). -->
+<script src="https://js.stripe.com/dahlia/stripe.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%27 stop-color=%27%23ff5b2e%27/%3E%3Cstop offset=%27.5%27 stop-color=%27%23ff3d8b%27/%3E%3Cstop offset=%271%27 stop-color=%27%237c5cff%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2732%27 height=%2732%27 rx=%2710%27 fill=%27url(%23g)%27/%3E%3C/svg%3E">
+<meta name="theme-color" content="#f5f4f0">
+<link rel="canonical" href="https://peel-work.com/account.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Peelworks">
+<meta property="og:title" content="Your account — Peelworks">
+<meta property="og:description" content="Sign in to Peelworks to see your orders, their status and tracking.">
+<meta property="og:url" content="https://peel-work.com/account.html">
+<meta property="og:image" content="https://peel-work.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://peel-work.com/assets/og.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="account">
+
+<main class="acc-page">
+  <div class="wrap">
+
+    <!-- Signed out -->
+    <section class="acc-auth" id="accAuth" hidden>
+      <div class="acc-intro">
+        <span class="eyebrow">Your account</span>
+        <h1>Track every<br><span class="grad-text">peel.</span></h1>
+        <p>Sign in to see what you’ve ordered, where it is, and its tracking number. Orders you placed before making an account show up too once you confirm your email.</p>
+        <ul class="acc-perks">
+          <li>Order history in one place</li>
+          <li>Live status: printing, shipped, delivered</li>
+          <li>Faster checkout with your email filled in</li>
+        </ul>
+      </div>
+      <div class="acc-card">
+        <div class="acc-tabs" role="tablist">
+          <button role="tab" id="tabLogin" aria-selected="true" data-tab="login">Sign in</button>
+          <button role="tab" id="tabSignup" aria-selected="false" data-tab="signup">Create account</button>
+        </div>
+
+        <form class="acc-form" id="fLogin" data-view="login" novalidate>
+          <label class="acc-field"><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
+          <label class="acc-field"><span>Password</span><input type="password" name="password" autocomplete="current-password" required></label>
+          <p class="acc-msg" role="alert" hidden></p>
+          <button class="btn btn-dark full" type="submit">Sign in</button>
+          <button class="link-btn acc-alt" type="button" data-go="forgot">Forgot your password?</button>
+        </form>
+
+        <form class="acc-form" id="fSignup" data-view="signup" novalidate hidden>
+          <label class="acc-field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="80" required></label>
+          <label class="acc-field"><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
+          <label class="acc-field"><span>Password <em>8+ characters</em></span><input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+          <p class="acc-msg" role="alert" hidden></p>
+          <button class="btn btn-dark full" type="submit">Create account</button>
+          <p class="acc-fine">By creating an account you agree to our <a href="terms.html">Terms</a> and <a href="privacy-policy.html">Privacy policy</a>.</p>
+        </form>
+
+        <form class="acc-form" id="fForgot" data-view="forgot" novalidate hidden>
+          <h2>Reset your password</h2>
+          <p class="acc-help">We’ll email you a 6-digit code.</p>
+          <label class="acc-field"><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
+          <p class="acc-msg" role="alert" hidden></p>
+          <button class="btn btn-dark full" type="submit">Send code</button>
+          <button class="link-btn acc-alt" type="button" data-go="login">&larr; Back to sign in</button>
+        </form>
+
+        <form class="acc-form" id="fReset" data-view="reset" novalidate hidden>
+          <h2>Choose a new password</h2>
+          <p class="acc-help" id="resetHelp">Enter the code we emailed you.</p>
+          <label class="acc-field"><span>6-digit code</span><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
+          <label class="acc-field"><span>New password <em>8+ characters</em></span><input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+          <p class="acc-msg" role="alert" hidden></p>
+          <button class="btn btn-dark full" type="submit">Save password &amp; sign in</button>
+          <button class="link-btn acc-alt" type="button" data-go="login">&larr; Back to sign in</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Signed in -->
+    <section class="acc-home" id="accHome" hidden>
+      <div class="acc-top">
+        <div><span class="eyebrow">Your account</span><h1>Hi, <span id="accName"></span>.</h1><p class="acc-email" id="accEmail"></p></div>
+        <div class="acc-top-btns"><a class="btn btn-light" href="designs.html">Shop designs</a><button class="btn btn-light" id="signOut">Sign out</button></div>
+      </div>
+
+      <div class="acc-verify" id="accVerify" hidden>
+        <div><b>Confirm your email</b><p id="verifyText">We sent a 6-digit code to your email. Enter it to confirm it’s you, and any orders you placed with this email before signing up will appear here.</p></div>
+        <form id="fVerify" class="acc-verify-form" novalidate>
+          <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" aria-label="6-digit code">
+          <button class="btn btn-dark" type="submit">Confirm</button>
+          <button class="link-btn" type="button" id="resend">Send a new code</button>
+          <p class="acc-msg" role="alert" hidden></p>
+        </form>
+      </div>
+
+      <div class="acc-orders-head"><h2>Your orders</h2><span class="acc-count" id="orderCount"></span></div>
+      <div class="acc-orders" id="orders"><div class="co-loading"><span class="spin dark"></span>Loading your orders…</div></div>
+      <p class="acc-fine acc-help-line">Something wrong with an order? <a href="contact.html">Contact us</a> with your order number.</p>
+    </section>
+
+    <!-- Server unavailable -->
+    <section class="co-state" id="accDown" hidden>
+      <div class="co-icon">!</div>
+      <h1>Accounts are offline.</h1>
+      <p id="accDownText">We couldn’t reach the shop server. Please try again in a minute.</p>
+      <div class="hero-ctas"><a href="account.html" class="btn btn-dark">Try again</a><a href="designs.html" class="btn btn-light">Keep browsing</a></div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/catalog.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/account.js"></script>
+</body>
+</html>

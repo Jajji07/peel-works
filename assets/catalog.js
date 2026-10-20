@@ -10,6 +10,9 @@ const CONFIG = {
   // Stripe PUBLISHABLE key (starts with pk_test_ or pk_live_). Safe to put here;
   // never put the SECRET key (sk_...) in the website.
   stripePublishableKey: 'pk_live_51UR3ZIRaZOLZV8wLxvI19KKvxgcYQhf50dUmkgqBtsDpiQLy1p2btHfqjsnVXKktD3HnrnRoP9oR5pYEPz2OzdIb00lOEt2ytN',
+  // Set to false to pause orders (for example while you're away). The site stays
+  // browsable, but checkout shows a "taking a short break" message instead.
+  storeOpen: true,
   shippingNote: 'Free shipping on every US order',
   skinPrice: 14,
   packPrice: 6,

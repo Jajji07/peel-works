@@ -12,6 +12,8 @@ Runs on your own computer/server. It does two jobs:
                       email, shipping address, items, total) is added to your
                       Google Sheet and to orders.csv as a backup.
   GET  /api/health    Quick "is it running?" check.
+  /api/auth/*, /api/me, /api/orders
+                      Customer accounts and order history (see accounts.py).
 
 Prices live HERE, not in the website, so nobody can change a price in their
 browser and pay less. Keep the prices in sync with CONFIG in assets/catalog.js.
@@ -25,6 +27,7 @@ import logging
 import os
 import re
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +35,8 @@ from pathlib import Path
 import stripe
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+
+import accounts
 
 HERE = Path(__file__).resolve().parent
 load_dotenv(HERE / ".env")
@@ -92,7 +97,44 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("peelworks")
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB uploads
+
+
+# ---------------------------------------------------------------------------
+# Delete customer photos older than PHOTO_KEEP_DAYS (privacy policy promise)
+# ---------------------------------------------------------------------------
+PHOTO_KEEP_DAYS = int(os.environ.get("PHOTO_KEEP_DAYS", "90"))
+
+
+def clean_old_uploads():
+    cutoff = time.time() - PHOTO_KEEP_DAYS * 86400
+    removed = 0
+    for f in UPLOAD_DIR.iterdir():
+        try:
+            if f.is_file() and f.stat().st_mtime < cutoff:
+                f.unlink()
+                removed += 1
+        except OSError:
+            log.exception("Could not delete %s", f)
+    if removed:
+        log.info("Deleted %d customer photo(s) older than %d days", removed, PHOTO_KEEP_DAYS)
+
+
+def _cleanup_loop():
+    while True:
+        try:
+            clean_old_uploads()
+        except Exception:
+            log.exception("Photo cleanup failed")
+        time.sleep(24 * 3600)  # once a day
+
+
+threading.Thread(target=_cleanup_loop, daemon=True, name="photo-cleanup").start()
 _lock = threading.Lock()
+
+# Customer accounts + order history
+app.register_blueprint(accounts.bp)
+accounts.init_db()
+accounts.import_csv_orders(CSV_PATH)
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +146,9 @@ def add_cors(resp):
     if origin in ALLOWED_ORIGINS:
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Vary"] = "Origin"
-        resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        resp.headers["Access-Control-Max-Age"] = "600"
     return resp
 
 
@@ -217,8 +260,16 @@ def checkout():
             },
         })
 
+    # Signed-in customers: link the order to their account and pre-fill their email.
+    extra = {}
+    user = accounts.current_user()
+    if user:
+        custom_notes["account_id"] = str(user["id"])
+        extra["customer_email"] = user["email"]
+
     try:
         session = stripe.checkout.Session.create(
+            **extra,
             ui_mode="form",  # embedded checkout form on checkout.html
             mode="payment",
             line_items=line_items,
@@ -328,6 +379,12 @@ def record_order(s):
                 w.writerow(SHEET_HEADER)
             w.writerow(row)
 
+    try:
+        acct = (s.get("metadata") or {}).get("account_id")
+        accounts.save_order(order_id, int(acct) if acct and acct.isdigit() else None, row[3], row[2], row[0],
+                            lines, s.get("amount_total") or 0)
+    except Exception:
+        log.exception("Could not save order %s to the accounts database", order_id)
     log.info("Recorded order %s for %s", order_id, row[3])
     append_to_sheet(row)
 

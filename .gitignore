@@ -1,0 +1,8 @@
+# Secrets and customer data — never commit these
+server/.env
+server/google-credentials.json
+server/orders.csv
+server/.venv/
+__pycache__/
+server/uploads/
+server/peelworks.db*

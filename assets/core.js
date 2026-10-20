@@ -32,12 +32,13 @@ document.addEventListener('change', e => { if (e.target.matches('select[data-mod
 
 /* ---------- page chrome: nav, footer, cart, toast ---------- */
 const page = document.body.dataset.page || '';
-const LINKS = [['index.html', 'Home', 'home'], ['designs.html', 'Designs', 'designs'], ['studio.html', 'Studio', 'studio'], ['about.html', 'About', 'about']];
+const LINKS = [['index.html', 'Home', 'home'], ['designs.html', 'Designs', 'designs'], ['studio.html', 'Studio', 'studio'], ['guide.html', 'Guide', 'guide'], ['about.html', 'About', 'about']];
 document.body.insertAdjacentHTML('afterbegin', `
 <nav class="nav" id="nav">
   <a href="index.html" class="logo" aria-label="Peelworks home"><span class="logo-mark"></span><span class="logo-text">peelworks</span></a>
   <div class="nav-links">${LINKS.map(([h, t, k]) => `<a href="${h}" class="nl-${k}${k === page ? ' active' : ''}"${k === page ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</div>
-  <button class="cart-btn" id="cartBtn" aria-label="Open cart">Cart <span class="cart-count" id="cartCount">0</span></button>
+  <div class="nav-end"><a href="account.html" class="acct-btn${page === 'account' ? ' active' : ''}" id="acctBtn" aria-label="Your account" title="Your account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg><span class="acct-initial" id="acctInitial"></span></a>
+  <button class="cart-btn" id="cartBtn" aria-label="Open cart">Cart <span class="cart-count" id="cartCount">0</span></button></div>
 </nav>`);
 document.body.insertAdjacentHTML('beforeend', `
 <footer>
@@ -45,8 +46,8 @@ document.body.insertAdjacentHTML('beforeend', `
     <div class="foot">
       <div><a href="index.html" class="logo"><span class="logo-mark"></span>peelworks</a><p>Hand-printed phone skins and vinyl stickers, made in Washington.</p></div>
       <div class="foot-cols">
-        <div><b>Shop</b><a href="designs.html">All designs</a><a href="studio.html">Make your own</a><a href="designs.html#packs">Sticker packs</a></div>
-        <div><b>Help</b><a href="contact.html">Contact us</a><a href="mailto:jatinkumarpyara@gmail.com?subject=Peelworks%20question">Email us</a><a href="shipping.html">Shipping &amp; returns</a><a href="about.html#faq">FAQ</a></div>
+        <div><b>Shop</b><a href="designs.html">All designs</a><a href="studio.html">Make your own</a><a href="designs.html#packs">Sticker packs</a><a href="account.html">Your orders</a></div>
+        <div><b>Help</b><a href="guide.html">How to apply</a><a href="contact.html">Contact us</a><a href="mailto:jatinkumarpyara@gmail.com?subject=Peelworks%20question">Email us</a><a href="shipping.html">Shipping &amp; returns</a><a href="about.html#faq">FAQ</a></div>
         <div><b>Legal</b><a href="privacy-policy.html">Privacy policy</a><a href="cookie-policy.html">Cookie policy</a><a href="refund-policy.html">Refund policy</a><a href="terms.html">Terms &amp; conditions</a></div>
         <div><b>Follow</b><a href="#">Instagram</a><a href="#">TikTok</a></div>
       </div>
@@ -58,6 +59,7 @@ document.body.insertAdjacentHTML('beforeend', `
 <aside class="drawer" id="drawer" aria-label="Cart">
   <div class="drawer-head"><h3>Your cart</h3><button class="icon-btn" id="closeCart" aria-label="Close cart">×</button></div>
   <div class="drawer-items" id="cartItems"></div>
+  <div class="cart-upsell" id="cartUpsell" hidden></div>
   <div class="drawer-foot">
     <div class="sub-row"><span>Subtotal</span><span id="subtotal">$0</span></div>
     <p class="ship-note">${esc(CONFIG.shippingNote)}</p>
@@ -67,6 +69,37 @@ document.body.insertAdjacentHTML('beforeend', `
 </aside>
 <div class="toast" id="toast" role="status"></div>`);
 
+/* ---------- accounts (token lives in this browser only) ---------- */
+PW.authToken = () => store.get('pw-token', '');
+PW.authUser = () => store.get('pw-user', null);
+PW.setAuth = (token, user) => {
+  if (token) store.set('pw-token', token);
+  if (user) store.set('pw-user', { name: user.name, email: user.email, verified: !!user.verified });
+  PW.paintAccount();
+};
+PW.clearAuth = () => { try { localStorage.removeItem('pw-token'); localStorage.removeItem('pw-user'); } catch (e) {} PW.paintAccount(); };
+PW.authFetch = async (path, { method = 'GET', body } = {}) => {
+  const headers = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const tok = PW.authToken();
+  if (tok) headers.Authorization = 'Bearer ' + tok;
+  const res = await fetch(API + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const json = await res.json().catch(() => ({}));
+  if (res.status === 401 && tok && !path.startsWith('/api/auth/')) PW.clearAuth();
+  if (!res.ok) { const e = new Error(json.error || 'Something went wrong. Please try again.'); e.status = res.status; throw e; }
+  return json;
+};
+PW.paintAccount = () => {
+  const u = PW.authToken() && PW.authUser();
+  const b = $('#acctBtn'), i = $('#acctInitial');
+  if (!b) return;
+  b.classList.toggle('signed-in', !!u);
+  i.textContent = u ? (u.name || u.email || '?').trim().charAt(0).toUpperCase() : '';
+  b.setAttribute('aria-label', u ? `Your account (${u.name || u.email})` : 'Sign in or create an account');
+  b.title = u ? 'Your account & orders' : 'Sign in';
+};
+PW.paintAccount();
+
 let toastT;
 PW.toast = (msg, ms = 2600) => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); };
 
@@ -75,8 +108,35 @@ PW.paint = (root = document) => {
   $$('[data-bg]', root).forEach(el => { const d = D[el.dataset.bg]; if (d) el.style.background = d.bg; });
 };
 PW.miniPhone = id => `<span class="mini-phone"><span class="mini-skin" data-bg="${id}"></span><span class="mini-cam"><span class="mini-cam-skin" data-bg="${id}"></span></span></span>`;
+/* ---------- saved designs + recently viewed ---------- */
+let saved = store.get('pw-saved', []).filter(id => D[id]);
+let recent = store.get('pw-recent', []).filter(id => D[id]);
+PW.isSaved = id => saved.includes(id);
+PW.savedList = () => saved.slice();
+PW.recentList = () => recent.slice();
+PW.clearRecent = () => { recent = []; store.set('pw-recent', []); };
+PW.pushRecent = id => { if (!D[id]) return; recent = [id, ...recent.filter(x => x !== id)].slice(0, 10); store.set('pw-recent', recent); };
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8.2 3.6 4.8 7 4.8c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.5 3.4 4.3 6.5-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>';
+PW.favBtn = (id, extra = '') => `<button class="fav${saved.includes(id) ? ' on' : ''}${extra}" data-fav="${id}" aria-pressed="${saved.includes(id)}" aria-label="Save design">${HEART}</button>`;
+PW.toggleSaved = (id, fromEl) => {
+  const on = !saved.includes(id);
+  saved = on ? [id, ...saved] : saved.filter(x => x !== id);
+  store.set('pw-saved', saved);
+  $$(`[data-fav="${id}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (on && !reduced) b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
+  updateSavedCount();
+  PW.toast(on ? `Saved ${D[id].name} ${D[id].way}. Find it under \u201cSaved\u201d on the Designs page.` : 'Removed from saved');
+  document.dispatchEvent(new CustomEvent('pw:saved', { detail: { id, on } }));
+};
+function updateSavedCount() { $$('[data-saved-count]').forEach(el => { el.textContent = saved.length; el.hidden = !saved.length; }); }
+PW.trust = () => `<ul class="trust">
+  <li><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg>Free US shipping</li>
+  <li><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>30-day returns</li>
+  <li><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Replaced free if damaged</li>
+</ul>`;
+PW.modelHelp = () => `<a class="model-help" href="mailto:jatinkumarpyara@gmail.com?subject=${encodeURIComponent('Phone model request')}">Don\u2019t see your phone? Request it</a>`;
 PW.designCard = (d, i = 0) => `
   <article class="card" style="animation-delay:${(i % 12) * 40}ms">
+    ${PW.favBtn(d.id)}
     <button class="card-art" data-quick="${d.id}" style="--tint:${d.tint}" aria-label="View ${esc(d.name)} ${esc(d.way)}">${PW.miniPhone(d.id)}<span class="card-glare"></span></button>
     <div class="card-body"><div><h3>${esc(d.name)}</h3><p>${esc(d.way)} · ${esc(d.tag)}</p></div>
       <div class="card-actions"><span class="card-price">${money(CONFIG.skinPrice)}</span><button class="add" data-add-skin="${d.id}" aria-label="Add ${esc(d.name)} ${esc(d.way)} skin to cart">+</button></div></div>
@@ -152,6 +212,14 @@ function renderCart() {
       <div class="ci-right"><span>${money(info.price * l.qty)}</span><button class="rm" data-act="rm" data-i="${i}">Remove</button></div></div>`;
   }).join('') : `<div class="empty"><b>◠‿◠</b>Your cart is empty.<br><a href="designs.html">Go find a skin you love →</a></div>`;
   $$('#cartItems .ci-thumb').forEach(el => { el.style.background = lineInfo(cart[+el.dataset.i]).bg; });
+  // gentle upsell: suggest a sticker pack if the cart has none
+  const hasPack = cart.some(l => P[l.pid] && P[l.pid].type === 'pack');
+  const up = $('#cartUpsell');
+  if (cart.length && !hasPack) {
+    const p = P['pack-eng'];
+    up.hidden = false;
+    up.innerHTML = `<span class="up-thumb" style="background:${D[p.designs[0]].bg}"></span><div><b>Add a sticker pack?</b><small>${esc(p.name)} \u00b7 5 vinyl stickers</small></div><button class="up-add" data-add-pack="${p.id}">+ ${money(p.price)}</button>`;
+  } else up.hidden = true;
 }
 $('#cartItems').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -172,6 +240,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') PW.closeCart(); });
 document.addEventListener('click', e => {
   const q = e.target.closest('.faq-q');
   if (q) { const item = q.parentElement, open = !item.classList.contains('open'); item.classList.toggle('open', open); q.setAttribute('aria-expanded', open); return; }
+  const f = e.target.closest('[data-fav]'); if (f) { e.preventDefault(); e.stopPropagation(); return PW.toggleSaved(f.dataset.fav, f); }
   const s = e.target.closest('[data-add-skin]'); if (s) return PW.addSkin(s.dataset.addSkin, s);
   const k = e.target.closest('[data-add-pack]'); if (k) return PW.addPack(k.dataset.addPack, k);
 });
@@ -181,6 +250,7 @@ const coBtn = $('#checkout'), coLabel = coBtn.innerHTML;
 const setBusy = busy => { coBtn.disabled = busy; coBtn.innerHTML = busy ? '<span class="spin"></span><span>Opening checkout…</span>' : coLabel; };
 coBtn.addEventListener('click', () => {
   if (!cart.length) return PW.toast('Your cart is empty');
+  if (CONFIG.storeOpen === false) return PW.toast('We\u2019re taking a short break and not taking orders right now. Your cart is saved!', 4500);
   if (!API) { console.warn('Set CONFIG.apiBase in assets/catalog.js to enable checkout.'); return PW.toast('Checkout is coming soon!'); }
   if (document.body.dataset.page === 'checkout') return PW.closeCart();
   setBusy(true);
@@ -192,6 +262,7 @@ PW.cartLines = () => cart.map(l => Object.assign({ info: lineInfo(l) }, l));
 PW.cartPayload = () => cart.map(l => ({ id: l.pid, model: l.model, qty: l.qty, design: l.design, upload: l.upload, zoom: l.zoom, x: l.x, y: l.y }));
 PW.clearCart = () => { cart = []; save(); renderCart(); };
 renderCart();
+updateSavedCount();
 
 /* ---------- one animation loop for the whole page ---------- */
 const frames = [];

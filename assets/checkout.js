@@ -20,13 +20,18 @@ function showError(msg) {
 if (qs.get('session_id')) {
   PW.clearCart();
   history.replaceState(null, '', location.pathname);
-  showState({ icon: '✓', title: 'Thank you! Your order is in.', text: 'A receipt is on its way to your email. We’ll print, laminate and cut your order, then mail it within a few business days.', actions: [['designs.html', 'Keep browsing', true], ['index.html', 'Back home', false]] });
+  const signed = PW.authToken() && PW.authUser();
+  showState({ icon: '✓', title: 'Thank you! Your order is in.', text: 'A receipt is on its way to your email. We’ll print, laminate and cut your order, then mail it within a few business days.' + (signed ? ' You can follow it from your account.' : ' Make a free account with the same email to track it.'), actions: [[signed ? 'account.html' : 'account.html#signup', signed ? 'Track my order' : 'Create an account', true], ['designs.html', 'Keep browsing', false]] });
   return;
 }
 
 const lines = PW.cartLines();
 if (!lines.length) {
   showState({ icon: '◠‿◠', title: 'Your cart is empty.', text: 'Find a design you love, then come back here to pay.', actions: [['designs.html', 'Browse designs', true], ['studio.html', 'Make your own', false]] });
+  return;
+}
+if (CONFIG.storeOpen === false) {
+  showState({ icon: '\u263e', title: 'We\u2019re taking a short break.', text: 'Orders are paused for now. Your cart is saved, so check back soon, or email us if you have a question.', actions: [['designs.html', 'Keep browsing', true], ['contact.html', 'Contact us', false]] });
   return;
 }
 if (!API || !CONFIG.stripePublishableKey || CONFIG.stripePublishableKey.includes('...')) {
@@ -44,6 +49,11 @@ $('#coLines').innerHTML = lines.map((l, i) => `
 lines.forEach((l, i) => { $(`.co-line .ci-thumb[data-i="${i}"]`).style.background = l.info.bg; });
 $('#coSub').textContent = money(lines.reduce((s, l) => s + l.info.price * l.qty, 0));
 
+// When signed in, the token links this order to the customer's account.
+const who = PW.authToken() && PW.authUser();
+$('#coWho').innerHTML = who
+  ? `Signed in as <b>${esc(who.email)}</b>. This order will show up in <a href="account.html">your account</a>.`
+  : `<a href="account.html">Sign in</a> or <a href="account.html#signup">create an account</a> to track this order later. Guest checkout works too.`;
 /* ---------- Stripe embedded checkout form ---------- */
 if (typeof Stripe === 'undefined') { showError('The payment form couldn’t load. Check your connection, turn off any ad blocker for this site, and refresh.'); return; }
 
@@ -66,11 +76,14 @@ const appearance = {
 };
 
 // Your server checks the cart, sets the real prices, and returns a client secret.
-const clientSecret = fetch(API + '/api/checkout', {
+const startCheckout = token => fetch(API + '/api/checkout', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
   body: JSON.stringify({ items: PW.cartPayload() }),
-})
+});
+const clientSecret = startCheckout(PW.authToken())
+  // an expired sign-in shouldn't block paying: drop it and check out as a guest
+  .then(res => (res.status === 401 && PW.authToken()) ? (PW.clearAuth(), startCheckout('')) : res)
   .then(async res => {
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.client_secret) throw new Error(json.error || 'Couldn’t start checkout. Please try again.');

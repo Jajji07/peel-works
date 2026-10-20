@@ -9,10 +9,11 @@ $('#tbModel').innerHTML = PW.modelOptions();
 $('#qvModel').innerHTML = PW.modelOptions();
 
 /* ---------- state ---------- */
-const state = { cat: CATEGORIES.includes(qs.get('cat')) ? qs.get('cat') : 'All', q: '', sort: 'featured' };
+const CHIPS = ['All', 'Saved', ...CATEGORIES];
+const state = { cat: CHIPS.includes(qs.get('cat')) ? qs.get('cat') : 'All', q: '', sort: 'featured' };
 let list = [], shown = 0, shuffleSeed = Math.random();
 
-$('#chips').innerHTML = ['All', ...CATEGORIES].map(c => `<button class="chip${c === state.cat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+$('#chips').innerHTML = CHIPS.map(c => `<button class="chip${c === state.cat ? ' active' : ''}${c === 'Saved' ? ' chip-saved' : ''}" data-cat="${esc(c)}">${c === 'Saved' ? '\u2665 Saved <span class="chip-count" data-saved-count></span>' : esc(c)}</button>`).join('');
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
   state.cat = b.dataset.cat; $$('.chip').forEach(c => c.classList.toggle('active', c === b));
@@ -25,9 +26,10 @@ $('#search').addEventListener('input', e => { clearTimeout(searchT); searchT = s
 $('#sort').addEventListener('change', e => { state.sort = e.target.value; shuffleSeed = Math.random(); refresh(true); });
 
 function compute() {
-  let out = DESIGNS.filter(d => (state.cat === 'All' || d.tag === state.cat) &&
+  const savedIds = PW.savedList();
+  let out = (state.cat === 'Saved' ? savedIds.map(id => D[id]) : DESIGNS).filter(d => (state.cat === 'All' || state.cat === 'Saved' || d.tag === state.cat) &&
     (!state.q || `${d.name} ${d.way} ${d.tag} ${d.desc}`.toLowerCase().includes(state.q)));
-  if (state.sort === 'featured') out = [...out.filter(d => d.featured), ...out.filter(d => !d.featured)];
+  if (state.sort === 'featured' && state.cat !== 'Saved') out = [...out.filter(d => d.featured), ...out.filter(d => !d.featured)];
   if (state.sort === 'az') out = [...out].sort((a, b) => (a.name + a.way).localeCompare(b.name + b.way));
   if (state.sort === 'shuffle') {
     let s = shuffleSeed * 1e9 | 0; const r = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
@@ -40,7 +42,12 @@ function refresh(scrollUp) {
   $('#grid').innerHTML = '';
   $('#resultCount').textContent = list.length ? `${list.length} design${list.length === 1 ? '' : 's'}${state.cat !== 'All' ? ' in ' + state.cat : ''}${state.q ? ` matching “${state.q}”` : ''}` : '';
   $('#endNote').hidden = true;
-  if (!list.length) { $('#grid').innerHTML = `<div class="no-results"><b>No designs match that.</b><button class="link-btn" id="clearFilters">Clear filters</button></div>`; $('#sentinel').hidden = true; return; }
+  if (!list.length) {
+    $('#grid').innerHTML = state.cat === 'Saved' && !state.q
+      ? `<div class="no-results"><b>Nothing saved yet.</b><span>Tap the \u2665 on any design to keep it here.</span><button class="link-btn" id="clearFilters">Browse all designs</button></div>`
+      : `<div class="no-results"><b>No designs match that.</b><button class="link-btn" id="clearFilters">Clear filters</button></div>`;
+    $('#sentinel').hidden = true; return;
+  }
   more();
   if (scrollUp) { const top = $('.gallery').getBoundingClientRect().top + scrollY - 170; if (scrollY > top) scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' }); }
 }
@@ -65,6 +72,18 @@ document.addEventListener('click', e => {
   if (e.target.closest('#reshuffle')) { state.sort = 'shuffle'; $('#sort').value = 'shuffle'; shuffleSeed = Math.random(); refresh(true); }
 });
 new IntersectionObserver(([en]) => { if (en.isIntersecting) more(); }, { rootMargin: '600px' }).observe($('#sentinel'));
+document.addEventListener('pw:saved', () => { if (state.cat === 'Saved') refresh(false); });
+
+/* ---------- recently viewed ---------- */
+function renderRecent() {
+  const ids = PW.recentList().slice(0, 8), box = $('#recent');
+  if (ids.length < 2) { box.hidden = true; return; }
+  box.hidden = false;
+  $('#recentRow').innerHTML = ids.map(id => `<button class="recent-item" data-quick="${id}" aria-label="${esc(D[id].name)} ${esc(D[id].way)}">${PW.miniPhone(id)}<span>${esc(D[id].name)}<small>${esc(D[id].way)}</small></span></button>`).join('');
+  PW.paint($('#recentRow'));
+}
+renderRecent();
+$('#clearRecent').addEventListener('click', () => { PW.clearRecent(); renderRecent(); });
 
 /* ---------- packs & bundles ---------- */
 const packs = PRODUCTS.filter(p => p.type === 'pack');
@@ -92,6 +111,8 @@ function setDesign(d, dir = 0) {
     $('#qvWays').innerHTML = ways.map(w => `<button class="swatch${w === d ? ' active' : ''}" data-way="${w.id}" aria-label="${esc(w.way)}" title="${esc(w.way)}"></button>`).join('');
     $$('#qvWays .swatch').forEach(s => { s.style.background = D[s.dataset.way].bg; });
     $('#qvStudio').href = `studio.html?d=${encodeURIComponent(d.id)}`;
+    const fav = $('#qvFav'); fav.dataset.fav = d.id; fav.classList.toggle('on', PW.isSaved(d.id)); fav.setAttribute('aria-pressed', PW.isSaved(d.id));
+    PW.pushRecent(d.id);
     const i = list.indexOf(d);
     $('#qvPos').textContent = i >= 0 ? `${i + 1} / ${list.length}` : '';
   };
@@ -114,7 +135,8 @@ function closeQV() {
   if (!qv.classList.contains('open')) return;
   qv.classList.remove('open'); qv.setAttribute('aria-hidden', 'true'); document.body.classList.remove('no-scroll');
   const u = new URL(location.href); u.searchParams.delete('d'); history.replaceState(null, '', u);
-  if (lastFocus) lastFocus.focus();
+  renderRecent();
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 function step(dir) {
   const pool = list.length ? list : DESIGNS;
@@ -133,6 +155,16 @@ $('#qvPrev').addEventListener('click', () => step(-1));
 $('#qvNext').addEventListener('click', () => step(1));
 $('#qvAdd').addEventListener('click', e => PW.addSkin(cur.id, e.currentTarget));
 $('#qvBundle').addEventListener('click', e => PW.addBundle(cur.id, e.currentTarget));
+$('#qvTrust').innerHTML = PW.trust();
+$('#qvModelHelp').innerHTML = PW.modelHelp();
+$('#qvShare').addEventListener('click', async () => {
+  const link = new URL(`designs.html?d=${encodeURIComponent(cur.id)}`, location.href).href;
+  const title = `${cur.name} (${cur.way}) phone skin \u2014 Peelworks`;
+  try {
+    if (navigator.share) { await navigator.share({ title, url: link }); return; }
+    await navigator.clipboard.writeText(link); PW.toast('Link copied \u2014 send it to a friend');
+  } catch (err) { if (err && err.name !== 'AbortError') PW.toast(link, 5000); }
+});
 addEventListener('keydown', e => {
   if (!qv.classList.contains('open')) return;
   if (e.key === 'Escape') closeQV();
